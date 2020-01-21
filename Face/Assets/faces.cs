@@ -18,7 +18,6 @@ public class faces : MonoBehaviour
     public Vector3 v3;
     // Start is called before the first frame update
     OpenCvSharp.VideoCapture camera;
-    OpenCvSharp.VideoCapture camera2;
     Mat image;
     Mat image2;
     Mat importantImage;
@@ -80,11 +79,8 @@ public class faces : MonoBehaviour
         image = new Mat();
         image2 = new Mat();
         camera = new VideoCapture(0);
-        camera2 = new VideoCapture(1);
         camera.FrameWidth = 640;
         camera.FrameHeight = 360;
-        camera2.FrameWidth = 640;
-        camera2.FrameHeight = 360;
         
         
     }
@@ -104,9 +100,7 @@ public class faces : MonoBehaviour
         }
         
         camera.Read(image);
-        camera2.Read(image2);
         Cv2.ImShow("image", image);
-        Cv2.ImShow("image2", image2);
 
             //var frames = pipe.WaitForFrames();
 
@@ -465,12 +459,12 @@ public class faces : MonoBehaviour
                 rotation_x = rotation_x - 45;
                 frame_count2 = frame_count;
             }
-            else if (pitch > 20)
+            else if (pitch > 35)
             {
                 rotation_y = rotation_y - 45;
                 frame_count2 = frame_count;
             }
-            else if (pitch < -20)
+            else if (pitch < -15)
             {
                 rotation_y = rotation_y + 45;
                 frame_count2 = frame_count;
