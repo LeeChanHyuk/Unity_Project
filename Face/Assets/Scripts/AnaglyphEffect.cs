@@ -9,7 +9,7 @@ using UnityEngine;
 
 [ExecuteInEditMode]
 public class AnaglyphEffect : MonoBehaviour {
-
+    
     public Shader fxShader;
     public Camera cam2;
     public float stereoWidth = 1.0f;
@@ -17,6 +17,7 @@ public class AnaglyphEffect : MonoBehaviour {
 
     private Material mat;
     private RenderTexture rt;
+    public static int first = 1;
 
     private void Start()
     {
@@ -59,20 +60,22 @@ public class AnaglyphEffect : MonoBehaviour {
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
     {
         if (cam2 == null || mat == null || rt == null) {
-            enabled = false;
             return;
         }
+        else
+        {
+            // Render to render texture
+            cam2.Render();
 
-        // Render to render texture
-        cam2.Render();
+            // Apply second texture to shader. ("_MainTex" is automatically applied by Unity3D)
+            mat.SetTexture("_MainTex2", rt);
 
-        // Apply second texture to shader. ("_MainTex" is automatically applied by Unity3D)
-        mat.SetTexture("_MainTex2", rt);
+            // Blit !
+            Graphics.Blit(source, destination, mat);
 
-        // Blit !
-        Graphics.Blit(source, destination, mat);
+            // Clean up RenderTexture resources. (Not sure if this is required???)
+            rt.Release();
 
-        // Clean up RenderTexture resources. (Not sure if this is required???)
-        rt.Release();
+        }
     }
 }

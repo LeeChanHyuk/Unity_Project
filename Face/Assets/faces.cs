@@ -37,9 +37,10 @@ public class faces : MonoBehaviour
     int frame_count2 = 0;
     int rotation_x = 0;
     int rotation_y = 0;
+    GameObject gameObject;
     void Start()
     {
-        
+        gameObject = GameObject.Find("Camera");
         colors = new List<Scalar>();
         face_position = Cv2.ImRead("C:/Users/CheNik/Desktop/Face_position.png");
         colors.Add(new Scalar(0, 0, 100));
@@ -89,7 +90,7 @@ public class faces : MonoBehaviour
     //prob.MinMaxLoc(out min, out max, out minLoc, out maxLoc);
     // Update is called once per frame
     void Update()
-    {
+    { 
         frame_count++;
         using (var frames = pipe.WaitForFrames())
         using (var depth = frames.DepthFrame)
@@ -122,93 +123,95 @@ public class faces : MonoBehaviour
             var prob2 = nets.Forward();
             var p = prob2.Reshape(1, prob2.Size(2));
 
-            for (int i = 0; i < prob2.Size(2); i++)
+        for (int i = 0; i < prob2.Size(2); i++)
+        {
+            var confidence = p.At<float>(i, 2);
+            if (confidence > 0.7)
             {
-                var confidence = p.At<float>(i, 2);
-                if (confidence > 0.7)
-                {
-                    //get value what we need
-                    var idx = (int)p.At<float>(i, 1);
-                    var x1 = (int)(image.Width * p.At<float>(i, 3));
-                    var y1 = (int)(image.Height * p.At<float>(i, 4));
-                    var x2 = (int)(image.Width * p.At<float>(i, 5));
-                    var y2 = (int)(image.Height * p.At<float>(i, 6));
-                    var width = x2 - x1 + 1;
-                    var height = y2 - y1 + 1;
-                    //draw result
-                    OpenCvSharp.Rect facerect = new OpenCvSharp.Rect(x1, y1, width + 1, height + 1);
-                    OpenCvSharp.Point center_point = new OpenCvSharp.Point((int)(x1 + (width / 2)) + 1, (int)(y1 + (height / 2) + 1));
-                    int specified_position = get_position(center_point);
-                    //print("specified_position = " + frame_count +" count = "+ specified_position);
-                    //float depth_center_point = depth.GetDistance(center_point.X, center_point.Y);
-                    rotate_Character(specified_position, center_point);
-                    Mat face = image4.Clone().SubMat(facerect);
-                    var tensorimage = CreateTensorFromImageFileAlt(face);
-                    var tensored_image = int_to_float_and_div(tensorimage);
+                //get value what we need
+                var idx = (int)p.At<float>(i, 1);
+                var x1 = (int)(image.Width * p.At<float>(i, 3));
+                var y1 = (int)(image.Height * p.At<float>(i, 4));
+                var x2 = (int)(image.Width * p.At<float>(i, 5));
+                var y2 = (int)(image.Height * p.At<float>(i, 6));
+                var width = x2 - x1 + 1;
+                var height = y2 - y1 + 1;
+                //draw result
+                OpenCvSharp.Rect facerect = new OpenCvSharp.Rect(x1, y1, width + 1, height + 1);
+                OpenCvSharp.Point center_point = new OpenCvSharp.Point((int)(x1 + (width / 2)) + 1, (int)(y1 + (height / 2) + 1));
+                int specified_position = get_position(center_point);
+                //print("specified_position = " + frame_count +" count = "+ specified_position);
+                //float depth_center_point = depth.GetDistance(center_point.X, center_point.Y);
+                rotate_Character(specified_position, center_point);
+                Mat face = image4.Clone().SubMat(facerect);
+                var tensorimage = CreateTensorFromImageFileAlt(face);
+                var tensored_image = int_to_float_and_div(tensorimage);
 
 
 
-                    var runner1 = session1.GetRunner();
-                    var runner2 = session2.GetRunner();
-                    var runner3 = session3.GetRunner();
-                    var input1 = graph1["input_1"][0];
-                    var input2 = graph2["input_1"][0];
-                    var input3 = graph3["input_1"][0];
-                    var pred1 = graph1["pred_pose/mul_24"][0];
-                    var pred2 = graph2["pred_pose/mul_24"][0];
-                    var pred3 = graph3["pred_pose/mul_24"][0];
-                    runner1.AddInput(input1, tensored_image);
-                    runner2.AddInput(input2, tensored_image);
-                    runner3.AddInput(input3, tensored_image);
-                    runner1.Fetch(pred1);
-                    runner2.Fetch(pred2);
-                    runner3.Fetch(pred3);
-                    var output1 = runner1.Run();
-                    var output2 = runner2.Run();
-                    var output3 = runner3.Run();
-                    TFTensor probresult1 = output1[0];
-                    TFTensor probresult2 = output2[0];
-                    TFTensor probresult3 = output3[0];
-                    float[,] result1 = return_value(probresult1);
-                    float[,] result2 = return_value(probresult2);
-                    float[,] result3 = return_value(probresult3);
-                    float[] result = new float[3];
-                    result[0] = result1[0, 0] + result2[0, 0] + result3[0, 0];
-                    result[1] = result1[0, 1] + result2[0, 1] + result3[0, 1];
-                    result[2] = result1[0, 2] + result2[0, 2] + result3[0, 2];
-                    //print("model1 result" + result1[0, 0] +" " +result1[0, 1] +" " +result1[0, 2]);
-                    //print("model2 result" + result2[0, 0] + " " + result2[0, 1] + " " + result2[0, 2]);
-                    //print("model3 result" + result3[0, 0] + " " + result3[0, 1] + " " + result3[0, 2]);
-                    //print(result[0]/3);
-                    //print(result[1]/3);
-                    //print(result[2]/3);
-                    float yaw = result[0] / 3;
-                    float pitch = result[1] / 3;
-                    float roll = result[2] / 3;
-                    image4 = draw_axis(image4, yaw, pitch, roll);
+                var runner1 = session1.GetRunner();
+                var runner2 = session2.GetRunner();
+                var runner3 = session3.GetRunner();
+                var input1 = graph1["input_1"][0];
+                var input2 = graph2["input_1"][0];
+                var input3 = graph3["input_1"][0];
+                var pred1 = graph1["pred_pose/mul_24"][0];
+                var pred2 = graph2["pred_pose/mul_24"][0];
+                var pred3 = graph3["pred_pose/mul_24"][0];
+                runner1.AddInput(input1, tensored_image);
+                runner2.AddInput(input2, tensored_image);
+                runner3.AddInput(input3, tensored_image);
+                runner1.Fetch(pred1);
+                runner2.Fetch(pred2);
+                runner3.Fetch(pred3);
+                var output1 = runner1.Run();
+                var output2 = runner2.Run();
+                var output3 = runner3.Run();
+                TFTensor probresult1 = output1[0];
+                TFTensor probresult2 = output2[0];
+                TFTensor probresult3 = output3[0];
+                float[,] result1 = return_value(probresult1);
+                float[,] result2 = return_value(probresult2);
+                float[,] result3 = return_value(probresult3);
+                float[] result = new float[3];
+                result[0] = result1[0, 0] + result2[0, 0] + result3[0, 0];
+                result[1] = result1[0, 1] + result2[0, 1] + result3[0, 1];
+                result[2] = result1[0, 2] + result2[0, 2] + result3[0, 2];
+                //print("model1 result" + result1[0, 0] +" " +result1[0, 1] +" " +result1[0, 2]);
+                //print("model2 result" + result2[0, 0] + " " + result2[0, 1] + " " + result2[0, 2]);
+                //print("model3 result" + result3[0, 0] + " " + result3[0, 1] + " " + result3[0, 2]);
+                //print(result[0]/3);
+                //print(result[1]/3);
+                //print(result[2]/3);
+                float yaw = result[0] / 3;
+                float pitch = result[1] / 3;
+                float roll = result[2] / 3;
+                image4 = draw_axis(image4, yaw, pitch, roll);
 
-                    /*if (yaw < -30)
-                        v3.y =v3.y+ 30;
-                    if (yaw > 30)
-                        v3.y = v3.y - 30;
-                    if(pitch)*/
+                /*if (yaw < -30)
+                    v3.y =v3.y+ 30;
+                if (yaw > 30)
+                    v3.y = v3.y - 30;
+                if(pitch)*/
 
-                    float yaw2 = yaw;
-                    float pitch2 = pitch - 5;
-                    float roll2 = roll + 2.4f;
-                    //yaw2 = rotate_Charactor(yaw2);
-                    //pitch2 = rotate_Charactor(pitch2);
-                    //roll2 = rotate_Charactor(roll2);
-                    print("yaw = " + yaw2 + " " + "pitch = " + pitch2 + " " + "roll = " + roll2);
-                    rotate_Character2(yaw2, pitch2, roll2,specified_position);
+                float yaw2 = yaw;
+                float pitch2 = pitch - 5;
+                float roll2 = roll + 2.4f;
+                //yaw2 = rotate_Charactor(yaw2);
+                //pitch2 = rotate_Charactor(pitch2);
+                //roll2 = rotate_Charactor(roll2);
+                print("yaw = " + yaw2 + " " + "pitch = " + pitch2 + " " + "roll = " + roll2);
+                rotate_Character2(yaw2, pitch2, roll2, specified_position);
+                anaglyph_apply(yaw2, pitch2, roll2, center_point);
 
 
-                    //pixxy.transform.rotation = Quaternion.Euler(-pitch2, yaw2, roll2);
+                //pixxy.transform.rotation = Quaternion.Euler(-pitch2, yaw2, roll2);
 
-                    Cv2.Rectangle(image4, new Point(x1, y1), new Point(x2, y2), new Scalar(255, 0, 0), 3, shift: 8);
-                }
+                Cv2.Rectangle(image4, new Point(x1, y1), new Point(x2, y2), new Scalar(255, 0, 0), 3, shift: 8);
             }
+        }
         Cv2.ImShow("image4", image4);
+
         
 
 
@@ -363,7 +366,7 @@ public class faces : MonoBehaviour
         return 0;
     }
 
-    private void rotate_Character(int index, Point center_Point)
+    private void rotate_Character(int index, Point center_Point) // transition
     {
         float x = (float)center_Point.X;
         float y = (float)center_Point.Y;
@@ -376,25 +379,25 @@ public class faces : MonoBehaviour
             pixxy.transform.rotation = Quaternion.Euler(rotation_y,rotation_x,0);
 
         }
-        else if (abs_x >= 0 && abs_y >= 0)
+        else if (abs_x >= 0 && abs_y >= 0) // 내가 왼쪽 상단으로 움직였을 때
         {
             abs_x = Math.Abs(abs_x);
             abs_y = Math.Abs(abs_y);
             pixxy.transform.rotation = Quaternion.Euler(-(int)(abs_y * 0.575f)+rotation_y, (int)(-abs_x * 0.40f)+rotation_x, 0);
         }
-        else if (abs_x >= 0 && abs_y <= 0)
+        else if (abs_x >= 0 && abs_y <= 0) // 내가 왼쪽 하단으로 움직였을 때
         {
             abs_x = Math.Abs(abs_x);
             abs_y = Math.Abs(abs_y);
             pixxy.transform.rotation = Quaternion.Euler((int)(abs_y * 0.575f) + rotation_y, (int)(-abs_x * 0.40f) + rotation_x, 0);
         }
-        else if (abs_x <= 0 && abs_y >= 0)
+        else if (abs_x <= 0 && abs_y >= 0) // 내가 오른쪽 상단으로 움직였을 때
         {
             abs_x = Math.Abs(abs_x);
             abs_y = Math.Abs(abs_y);
             pixxy.transform.rotation = Quaternion.Euler(-(int)(abs_y * 0.575f) + rotation_y, (int)(abs_x * 0.40f) + rotation_x, 0);
         }
-        else if (abs_x <= 0 && abs_y <= 0)
+        else if (abs_x <= 0 && abs_y <= 0) // 내가 오른쪽 하단으로 움직였을 때
         {
             abs_x = Math.Abs(abs_x);
             abs_y = Math.Abs(abs_y);
@@ -442,7 +445,7 @@ public class faces : MonoBehaviour
         }*/
     }
 
-    private void rotate_Character2(float yaw ,float pitch , float roll , int specified_position)
+    private void rotate_Character2(float yaw ,float pitch , float roll , int specified_position) // rotation
     {
         if (specified_position == 1)
         {
@@ -473,11 +476,70 @@ public class faces : MonoBehaviour
 
     }
 
-    private void rotate_character3(float depth_value)
+    private void rotate_character3(float depth_value) // depth
     {
         if (depth_value > 0.2 && depth_value < 0.8)
         {
             pixxy.transform.position = new Vector3(0, 0, depth_value * 50f * -1 - 40 + 80);
         }
     }
+
+    private void anaglyph_apply(float yaw, float pitch, float roll, Point center_Point)
+    {
+        float x = (float)center_Point.X;
+        float y = (float)center_Point.Y;
+        //-45가 내가볼때 우측으로 돈다 45도는 왼쪽으로 돌겠지
+
+        int abs_x = center_Point.X - 320;
+        int abs_y = center_Point.Y - 160;
+        if (Math.Abs(abs_x) < 60 && Math.Abs(abs_y) < 60)
+        {
+            gameObject.GetComponent<AnaglyphEffect>().enabled = true;
+        }
+        else if (abs_x >= 0 && abs_y >= 0) // 내가 왼쪽 하단으로 움직였을 때
+        {
+            if (yaw < 0 || pitch < -15) // 왼쪽을보거나 아랫쪽을 보면
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = false;
+            }
+            else
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = true;
+            }
+        }
+        else if (abs_x >= 0 && abs_y <= 0) // 내가 왼쪽 상단으로 움직였을 때
+        {
+            if (yaw < 0 || pitch > 15) // 왼쪽을보거나 윗쪽을 보면
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = false;
+            }
+            else
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = true;
+            }
+        }
+        else if (abs_x <= 0 && abs_y >= 0) // 내가 오른쪽 하단으로 움직였을 때
+        {
+            if (yaw > 0 || pitch < -15) // 오른쪽을보거나 아랫쪽을 보면
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = false;
+            }
+            else
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = true;
+            }
+        }
+        else if (abs_x <= 0 && abs_y <= 0) // 내가 오른쪽 상단으로 움직였을 때
+        {
+            if (yaw > 0 || pitch > 15) // 오른쪽을보거나 윗쪽을 보면
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = false;
+            }
+            else
+            {
+                gameObject.GetComponent<AnaglyphEffect>().enabled = true;
+            }
+        }
+    }
 }
+
