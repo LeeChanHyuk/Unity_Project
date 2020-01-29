@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QCARConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="qcar_config.xsd">
+  <Tracking>
+    <ImageTarget name="school" size="50.000000 51.157406" />
+    <ImageTarget name="start2" size="50.000000 50.000000" />
+    <ImageTarget name="kkut" size="30.000000 36.325302" />
+    <ImageTarget name="start" size="50.000000 50.000000" />
+    <ImageTarget name="right" size="7.000000 7.000000" />
+    <ImageTarget name="left" size="7.000000 7.000000" />
+    <ImageTarget name="dam" size="50.000000 38.535645" />
+    <ImageTarget name="togi" size="60.000000 39.891891" />
+    <ImageTarget name="bob" size="50.000000 37.523453" />
+    <ImageTarget name="55cm" size="55.000000 36.567566" />
+    <ImageTarget name="3cm" size="30.000000 30.000000" />
+    <ImageTarget name="park3" size="60.000000 33.750000" />
+    <ImageTarget name="park2" size="60.000000 60.000000" />
+    <ImageTarget name="egb" size="220.000000 293.333344" />
+    <ImageTarget name="wallet" size="100.000000 125.057381" />
+    <ImageTarget name="book" size="2000.000000 2000.000000" />
+  </Tracking>
+</QCARConfig>
